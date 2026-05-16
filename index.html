@@ -236,37 +236,21 @@ var modalCant = 1;
 var varianteSeleccionada = null;
 var metodoEntrega = 'domicilio';
 
-var APPS_URL = 'https://script.google.com/macros/s/AKfycbybajMmZsK_DLoqPPtPq0AAp53ftkxWSg5Qmsw2sXMBImPWOLpNw3AwUeGzwayaRq_B9Q/exec';
-
 window.onload = function() {
-  // Cargar datos via JSONP para evitar CORS
-  var script = document.createElement('script');
-  script.src = APPS_URL + '?json=1&callback=recibirDatos';
-  document.head.appendChild(script);
-
-  // Timeout por si falla
-  setTimeout(function() {
-    if (catalogoData.productos.length === 0) {
+  google.script.run
+    .withFailureHandler(function() {
       document.getElementById('page-loader').style.display = 'none';
       document.getElementById('productos-grid').innerHTML =
-        '<div class="empty"><div class="empty-icon">&#9888;</div>'
-        + '<p>Error cargando el catálogo. Intenta de nuevo.</p></div>';
-    }
-  }, 8000);
+        '<div class="empty"><div class="empty-icon">&#9888;</div><p>Error cargando el catálogo.</p></div>';
+    })
+    .withSuccessHandler(function(data) {
+      document.getElementById('page-loader').style.display = 'none';
+      if (data.error) { alert('Error: ' + data.error); return; }
+      catalogoData = data;
+      renderCats();
+      renderProductos();
+    }).getCatalogoData();
 };
-
-function recibirDatos(data) {
-  document.getElementById('page-loader').style.display = 'none';
-  if (!data || data.error) {
-    document.getElementById('productos-grid').innerHTML =
-      '<div class="empty"><div class="empty-icon">&#9888;</div>'
-      + '<p>Error: ' + (data ? data.error : 'sin datos') + '</p></div>';
-    return;
-  }
-  catalogoData = data;
-  renderCats();
-  renderProductos();
-}
 
 function renderCats() {
   var cats = ['Todas'].concat(catalogoData.categorias);
